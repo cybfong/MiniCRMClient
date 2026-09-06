@@ -17,7 +17,7 @@ import * as React from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { getJWTRemainingTime, getUserName } from '../utils/apiMiniCRM';
 import { iconArrowRightStartOnRectangle, iconChevronDoubleLeft, iconChevronDoubleRight } from './icons/AppIcons';
-import { menuItems } from './ui/MenuItems';
+import { menuItems } from './MenuItems';
 
 const appTitle = 'Mini CRM';
 

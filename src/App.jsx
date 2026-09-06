@@ -1,7 +1,7 @@
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
 import AppLayout from './ui/AppLayout';
 import Login from './ui/Login';
-import { menuItems } from './ui/menuItems';
+import { menuItems } from './ui/MenuItems';
 
 function RequireAuth({ children }) {
   const token = sessionStorage.getItem('jwtToken');
