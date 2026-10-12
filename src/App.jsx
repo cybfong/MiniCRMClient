@@ -1,29 +1,41 @@
-import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import Customer from './features/customer/Customer';
+import { CustomerLoader } from './features/customer/CustomerLoader';
+import Dashboard from './features/dashboard/Dashboard';
+import Login from './features/login/Login';
+import Setting from './features/setting/Setting';
+import User from './features/user/User';
+import { UserLoader } from './features/user/UserLoader';
 import AppLayout from './ui/AppLayout';
-import Login from './ui/Login';
-import { menuItems } from './ui/MenuItems';
 
-function RequireAuth({ children }) {
-  const token = sessionStorage.getItem('jwtToken');
-  if (!token) {
-    return <Navigate to='/login' replace />;
-  }
-  return children;
-}
-
+// Create the router once, outside the React component.
 const router = createBrowserRouter([
-  { path: '/login', element: <Login /> },
   {
-    path: '/',
-    element: (
-      <RequireAuth>
-        <AppLayout />
-      </RequireAuth>
-    ),
-    children: menuItems.map((item) => ({
-      path: item.path,
-      element: item.element,
-    })),
+    element: <AppLayout />,
+    children: [
+      {
+        path: '/',
+        element: <Login />,
+      },
+      {
+        path: '/customer',
+        element: <Customer />,
+        loader: CustomerLoader,
+      },
+      {
+        path: '/user',
+        element: <User />,
+        loader: UserLoader,
+      },
+      {
+        path: '/setting',
+        element: <Setting />,
+      },
+      {
+        path: '/dashboard',
+        element: <Dashboard />,
+      },
+    ],
   },
 ]);
 

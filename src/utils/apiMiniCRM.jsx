@@ -1,3 +1,6 @@
+import axios from 'axios';
+import store from '../store';
+
 const API_URL = 'http://localhost:8080/api';
 
 export async function doLogin(login) {
@@ -11,10 +14,13 @@ export async function doLogin(login) {
     });
 
     console.log('Login response status:', res.status);
-    console.log('Login response content-type:', res.headers.get('content-type'));
+    console.log(
+      'Login response content-type:',
+      res.headers.get('content-type'),
+    );
 
     const responseText = await res.text();
-    console.log('Login response body:', responseText);
+    // console.log('Login response body:', responseText);
 
     if (!res.ok) {
       throw new Error(`Login failed with status ${res.status}`);
@@ -28,19 +34,21 @@ export async function doLogin(login) {
 }
 
 export function getUserName() {
-  const token = sessionStorage.getItem('jwtToken');
+  const token = store.getState().user.token;
+  console.log(`JWT Token in getUserName() = ${token}`);
 
   if (token) {
     const payload = JSON.parse(atob(token.split('.')[1]));
     const userName = payload.sub;
-
-    console.log('Logged-in user:', userName);
+    // console.log('Logged-in user:', userName);
     return userName;
   }
 }
 
 export function getJWTRemainingTime() {
-  const token = sessionStorage.getItem('jwtToken');
+  const token = store.getState().auth.token;
+  console.log(`JWT Token in getJWTRemainingTime() = ${token}`);
+
   if (!token) return '00:00';
 
   try {
@@ -72,3 +80,21 @@ export function getJWTRemainingTime() {
     return 'Invalid';
   }
 }
+
+export const fetchCustomers = async () => {
+  const token = store.getState().auth.token;
+  console.log(`JWT Token in fetchCustomers() = ${token}`);
+
+  try {
+    const response = await axios.get(`${API_URL}/customers`, {
+      headers: {
+        Authorization: `Bearer ${token}`, // Attach Bearer token
+      },
+    });
+    console.log('Data from server:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Request failed:', error.response?.status);
+    throw error;
+  }
+};
