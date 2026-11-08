@@ -25,4 +25,8 @@
       transform: rotate(360deg);
     }
   }
+
+  .ag-theme-alpine .ag-row.active-customer-row .ag-cell {
+    background-color: theme(--color-amber-200) !important;
+  }
 }

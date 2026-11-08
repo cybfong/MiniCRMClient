@@ -91,7 +91,43 @@ export const fetchCustomers = async () => {
         Authorization: `Bearer ${token}`, // Attach Bearer token
       },
     });
-    console.log('Data from server:', response.data);
+    console.log('Customer Data from server:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Request failed:', error.response?.status);
+    throw error;
+  }
+};
+
+export const fetchContactById = async (id) => {
+  const token = store.getState().auth.token;
+  console.log(`JWT Token in fetchContactById() = ${token}`);
+
+  try {
+    const response = await axios.get(`${API_URL}/contacts/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`, // Attach Bearer token
+      },
+    });
+    console.log('Contact Data from server:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Request failed:', error.response?.status);
+    throw error;
+  }
+};
+
+export const fetchNoteById = async (id) => {
+  const token = store.getState().auth.token;
+  console.log(`JWT Token in fetchNoteById() = ${token}`);
+
+  try {
+    const response = await axios.get(`${API_URL}/notes/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`, // Attach Bearer token
+      },
+    });
+    console.log('Note Data from server:', response.data);
     return response.data;
   } catch (error) {
     console.error('Request failed:', error.response?.status);

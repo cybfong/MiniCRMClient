@@ -13,6 +13,10 @@ function AppLayout() {
   // Automatically observe React Router navigation.
   const navigation = useNavigation();
 
+  // const fetchers = useFetchers();
+
+  // const fetcherLoading = fetchers.some((fetcher) => fetcher.state !== 'idle');
+
   // Show Loader for manual operations OR route loading.
   const showLoader = manualLoading || navigation.state !== 'idle';
 
@@ -20,18 +24,16 @@ function AppLayout() {
   // console.log('AppLayout is re-rendered');
 
   return (
-    <div className="grid h-screen grid-rows-[auto_1fr_auto]">
+    <div className="grid h-dvh grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden">
       <Loader isLoading={showLoader} />
 
       <Header onLoadingStart={startLoader} onLoadingEnd={stopLoader} />
 
-      <div>
-        <main>
-          <Outlet context={{ setFooterText, startLoader, stopLoader }} />
-        </main>
-      </div>
+      <main className="min-h-0 overflow-hidden">
+        <Outlet context={{ setFooterText, startLoader, stopLoader }} />
+      </main>
 
-      <Footer message={footerText} />
+      <Footer className="shrink-0" message={footerText} />
     </div>
   );
 }
