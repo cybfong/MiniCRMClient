@@ -1,4 +1,6 @@
 import axios from 'axios';
+
+// You cannot use useSelector outside REACT component !!
 import store from '../store';
 
 const API_URL = 'http://localhost:8080/api';
@@ -30,18 +32,6 @@ export async function doLogin(login) {
   } catch (error) {
     console.error('doLogin error:', error);
     throw new Error('Failed to login', { cause: error });
-  }
-}
-
-export function getUserName() {
-  const token = store.getState().user.token;
-  console.log(`JWT Token in getUserName() = ${token}`);
-
-  if (token) {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const userName = payload.sub;
-    // console.log('Logged-in user:', userName);
-    return userName;
   }
 }
 
@@ -128,6 +118,24 @@ export const fetchNoteById = async (id) => {
       },
     });
     console.log('Note Data from server:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Request failed:', error.response?.status);
+    throw error;
+  }
+};
+
+export const fetchUserDetails = async (userName) => {
+  const token = store.getState().auth.token;
+  console.log(`JWT Token in fetchUserDetails() = ${token}`);
+
+  try {
+    const response = await axios.get(`${API_URL}/user/${userName}`, {
+      headers: {
+        Authorization: `Bearer ${token}`, // Attach Bearer token
+      },
+    });
+    console.log('User Data from server:', response.data);
     return response.data;
   } catch (error) {
     console.error('Request failed:', error.response?.status);

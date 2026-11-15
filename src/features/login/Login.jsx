@@ -3,14 +3,14 @@ import { useDispatch } from 'react-redux';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import Button from '../../ui/Button';
 import { iconLockClosed } from '../../ui/icons/AppIcons';
-import { doLogin } from '../../utils/apiMiniCRM';
-import { updateName, updateToken } from './authSlice';
+import { doLogin, fetchUserDetails } from '../../utils/apiMiniCRM';
+import { setAuthDetails, updateToken } from './authSlice';
 
 function Login() {
   // Pull the setter function from the outlet context
   const { setFooterText, startLoader, stopLoader } = useOutletContext();
 
-  const [username, setUsername] = useState('');
+  const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
 
   const navigate = useNavigate();
@@ -24,7 +24,7 @@ function Login() {
     event.preventDefault();
 
     const login = {
-      userName: username,
+      userName,
       password,
     };
 
@@ -35,14 +35,21 @@ function Login() {
       // 1. Authenticate
       const jwtToken = await doLogin(login);
 
-      // 2. Save authentication details
-      dispatch(updateName(username));
+      // 2. Need to save JWT Token into store immediately
       dispatch(updateToken(jwtToken));
 
-      // 3. Wait before navigating
-      await minimumDelay;
+      // 3. Get user details (immediately need JWT Token)
+      const userDetails = await fetchUserDetails(userName);
 
-      // 4. Navigate to Customers
+      //console.log('User Details : ', userDetails, jwtToken);
+
+      // 4. Save userDetails
+      dispatch(setAuthDetails(userDetails));
+
+      // 5. Wait before navigating
+      // await minimumDelay;
+
+      // 6. Navigate to Customers
       await navigate('/customer');
     } catch (error) {
       console.error('Login failed:', error);
@@ -71,13 +78,14 @@ function Login() {
         </div>
 
         <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center">
-          <label htmlFor="username" className="sm:basis-20">
+          <label htmlFor="userName" className="sm:basis-20">
             User Name
           </label>
           <input
+            id="userName"
             type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            value={userName}
+            onChange={(e) => setUserName(e.target.value)}
             className="grow rounded-full border border-stone-200 px-4 py-2 text-sm transition-all duration-300 placeholder:text-stone-400 focus:ring-3 focus:ring-indigo-400 focus:outline-none md:px-6 md:py-3"
             placeholder="Enter username"
           />
@@ -99,7 +107,7 @@ function Login() {
         <Button
           type="primary"
           onClick={handleSubmit}
-          disabled={!username || !password ? true : false}
+          disabled={!userName || !password ? true : false}
         >
           Continue
         </Button>

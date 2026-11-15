@@ -7,6 +7,8 @@ import Loader from './Loader';
 
 function AppLayout() {
   const [footerText, setFooterText] = useState('Default Footer Text');
+  const [optionalFooterText, setOptionalFooterText] = useState('');
+  const [optionalFooterStyle, setOptionalFooterStyle] = useState('');
 
   const { isLoading: manualLoading, startLoader, stopLoader } = useDelay(500);
 
@@ -30,10 +32,23 @@ function AppLayout() {
       <Header onLoadingStart={startLoader} onLoadingEnd={stopLoader} />
 
       <main className="min-h-0 overflow-hidden">
-        <Outlet context={{ setFooterText, startLoader, stopLoader }} />
+        <Outlet
+          context={{
+            setFooterText,
+            setOptionalFooterText,
+            setOptionalFooterStyle,
+            startLoader,
+            stopLoader,
+          }}
+        />
       </main>
 
-      <Footer className="shrink-0" message={footerText} />
+      <Footer
+        className="shrink-0"
+        message={footerText}
+        optionalMessage={optionalFooterText}
+        optionalMessageStyle={optionalFooterStyle}
+      />
     </div>
   );
 }

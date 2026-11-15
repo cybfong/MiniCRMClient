@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { getUsername, logout } from '../features/login/authSlice';
+import { getFullName, logout } from '../features/login/authSlice';
 import {
   iconArrowRightStartOnRectangle,
   iconCog8Tooth,
@@ -41,10 +41,11 @@ const menuItems = [
 ];
 
 function Header({ onLoadingStart, onLoadingEnd }) {
-  const username = useSelector(getUsername);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const location = useLocation();
+
+  const fullName = useSelector(getFullName);
 
   const handleIconClick = async (item) => {
     // Show Loader and start the 500ms timer.
@@ -87,7 +88,7 @@ function Header({ onLoadingStart, onLoadingEnd }) {
   return (
     <header className="flex items-center border-b border-slate-400 bg-violet-400 px-4 py-3 tracking-widest text-stone-200 sm:px-6">
       <span className="text-3xl font-semibold italic">Mini-CRM</span>
-      {username && (
+      {fullName && (
         <>
           <nav className="ml-12 flex items-center justify-center gap-3">
             {menuItems.map((item) => {
@@ -112,7 +113,7 @@ function Header({ onLoadingStart, onLoadingEnd }) {
             })}
           </nav>
           <div className="ml-auto">
-            <span className="text-xl font-semibold uppercase">{username}</span>
+            <span className="text-xl font-semibold uppercase">{fullName}</span>
           </div>
         </>
       )}

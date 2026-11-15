@@ -57,6 +57,10 @@ export const customerColumnDefs = [
     headerName: 'Status',
     editable: true,
     cellClassRules: checkCellUpdatedRule,
+    cellEditor: 'agSelectCellEditor',
+    cellEditorParams: {
+      values: ['ACTIVE', 'LEAD', 'INACTIVE'],
+    },
   },
   {
     field: 'createdAt',

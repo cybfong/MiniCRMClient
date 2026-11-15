@@ -12,14 +12,12 @@ import {
 import storageSession from 'redux-persist/lib/storage/session';
 
 import authReducer from './features/login/authSlice';
-import userReducer from './features/user/userSlice';
 import customerReducer from './features/customer/customerSlice';
 
 const sessionStorageAdapter = storageSession?.default ?? storageSession;
 
 const rootReducer = combineReducers({
   auth: authReducer,
-  user: userReducer,
   customer: customerReducer,
 });
 

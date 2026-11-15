@@ -11,7 +11,16 @@ import Contact from '../contact/Contact';
 import Note from '../note/Note';
 import { useDispatch, useSelector } from 'react-redux';
 import ChangeBadge from '../../ui/badge/ChangeBadge.jsx';
-import { getUpdatedRows, setInitialData, updateRow } from './customerSlice.js';
+import {
+  addRow,
+  EDITABLE_FIELDS,
+  getNewRows,
+  getUpdatedRows,
+  setInitialData,
+  updateRow,
+} from './customerSlice.js';
+import Button from '../../ui/Button.jsx';
+import { getFullName, getUserId } from '../login/authSlice.js';
 
 const menuItems = [
   {
@@ -30,7 +39,8 @@ const menuItems = [
 
 function Customer() {
   // Pull the setter function from the outlet context
-  const { setFooterText } = useOutletContext();
+  const { setFooterText, setOptionalFooterText, setOptionalFooterStyle } =
+    useOutletContext();
 
   const gridRef = useRef(null); // 1. Create a reference
 
@@ -43,17 +53,24 @@ function Customer() {
   const currentRowData = useSelector((state) => state.customer.currentRowData);
   const initialRowData = useSelector((state) => state.customer.initialRowData);
   const updatedCount = useSelector(getUpdatedRows);
+  const newCount = useSelector(getNewRows);
+  const userId = useSelector(getUserId);
+  const fullName = useSelector(getFullName);
 
   const [rowCount, setRowCount] = useState(0);
   const [selectedCustomerIdsToDelete, setSelectedCustomerIdsToDelete] =
     useState([]);
   const [activeCustomerId, setActiveCustomerId] = useState(null);
 
+  const [gridApi, setGridApi] = useState(null);
+
   // ==================================================
   // UseEffect start
   useEffect(() => {
     setFooterText('Manage customer details');
-  }, [setFooterText]);
+    setOptionalFooterText('');
+    setOptionalFooterStyle('');
+  }, [setFooterText, setOptionalFooterText, setOptionalFooterStyle]);
 
   useEffect(() => {
     // console.log('Load customer data to redux');
@@ -152,6 +169,19 @@ function Customer() {
       console.log('>>> inside [onCellEditRequest]...');
 
       const { data, colDef, newValue } = event;
+
+      // Check for null, undefined, empty string, or whitespace-only
+      const isEmpty =
+        newValue == null ||
+        (typeof newValue === 'string' && newValue.trim() === '');
+
+      if (isEmpty) {
+        if (gridApi) {
+          gridApi.refreshCells({ rowNodes: [event.node], force: true });
+        }
+        return;
+      }
+
       dispatch(
         updateRow({
           id: data.id,
@@ -160,15 +190,82 @@ function Customer() {
         }),
       );
     },
-    [dispatch],
+    [dispatch, gridApi],
   );
+
+  // This triggers automatically when AG Grid is fully loaded
+  const onGridReady = (params) => {
+    setGridApi(params.api); // <--- Save the API to your state here
+  };
+  const handleAddNewRow = () => {
+    // 1. Add to bottom of Redux
+    dispatch(addRow({ userId, fullName }));
+
+    // 2. Control the grid UI view safely
+    setTimeout(() => {
+      if (!gridApi) return;
+
+      // Because postSortRows moved it to visual position 0:
+      const lastIndex = gridApi.getDisplayedRowCount() - 1;
+      gridApi.ensureIndexVisible(0);
+      gridApi.startEditingCell({
+        rowIndex: lastIndex,
+        colKey: 'customerName',
+      });
+    }, 50);
+  };
+
+  // Check if there is any incomplete new row
+  const hasIncompleteNewRow = useMemo(() => {
+    return currentRowData.some(
+      (row) =>
+        row.isNew &&
+        EDITABLE_FIELDS.some(
+          (field) => !row[field] || String(row[field]).trim() === '',
+        ),
+    );
+  }, [currentRowData]);
+
+  // Handle Confirm action with validation
+  const handleConfirm = () => {
+    const newRows = currentRowData.filter((row) => row.isNew);
+
+    for (const row of newRows) {
+      const hasEmptyField = EDITABLE_FIELDS.some(
+        (field) => !row[field] || String(row[field]).trim() === '',
+      );
+
+      if (hasEmptyField) {
+        // Set red warning styles
+        setOptionalFooterStyle('font-bold text-rose-500');
+        setOptionalFooterText(
+          'Please fill in all data fields for new customer rows !',
+        );
+
+        if (gridApi) {
+          const rowIndex = currentRowData.findIndex((r) => r.id === row.id);
+          if (rowIndex !== -1) {
+            gridApi.ensureIndexVisible(rowIndex);
+            gridApi.startEditingCell({ rowIndex, colKey: 'customerName' });
+          }
+        }
+        return; // Abort save
+      }
+    }
+
+    // Proceed with save API dispatch...
+
+    // Set green success styles
+    setOptionalFooterStyle('font-semibold text-emerald-500');
+    setOptionalFooterText('Changes saved successfully!');
+  };
 
   return (
     <div className="grid h-full min-h-0 min-w-0 grid-cols-2 grid-rows-[minmax(0,2.3fr)_minmax(0,2fr)] gap-1 overflow-hidden p-1">
       <div className="col-span-2 flex min-h-0 min-w-0 flex-col overflow-hidden border border-slate-200 p-2">
         <div className="m-1 flex shrink-0 items-center rounded bg-indigo-300 p-1.5">
-          <div className="px-3 py-1 text-xl font-semibold text-stone-700">
-            Customers
+          <div className="flex px-3 py-1 text-xl font-semibold text-stone-700">
+            <span>Customers [Total : {rowCount}]</span>
           </div>
           <nav className="ml-2 flex items-center justify-center gap-2">
             {menuItems.map((item) => {
@@ -181,17 +278,31 @@ function Customer() {
                       ? updatedCount.length
                       : item.type === 'delete'
                         ? selectedCustomerIdsToDelete.length
-                        : 0
+                        : item.type === 'add'
+                          ? newCount.length
+                          : 0
                   }
                   type={item.type}
                 />
               );
             })}
           </nav>
-          <div className="ml-auto px-3 py-1 text-xl">
-            <span>Total Customers : [</span>
-            <span>{rowCount}</span>
-            <span>]</span>
+          <div className="ml-auto flex items-center gap-3 px-3 py-1 text-xl">
+            {/* <div>
+              <span>Total Customers : [</span>
+              <span>{rowCount}</span>
+              <span>]</span>
+            </div> */}
+            <Button
+              type="small"
+              onClick={handleAddNewRow}
+              disabled={hasIncompleteNewRow}
+            >
+              Add Customer
+            </Button>
+            <Button type="small" onClick={handleConfirm}>
+              Confirm
+            </Button>
           </div>
         </div>
 
@@ -222,6 +333,9 @@ function Customer() {
             getRowId={(params) => String(params.data.id)} // do not remove, this is needed
             context={{ initialRowData }}
             // Redux store update end
+
+            // handle add row
+            onGridReady={onGridReady}
           />
         </div>
       </div>

@@ -3,11 +3,14 @@ import { useOutletContext } from 'react-router-dom';
 
 function Dashboard() {
   // Pull the setter function from the outlet context
-  const { setFooterText } = useOutletContext();
+  const { setFooterText, setOptionalFooterText, setOptionalFooterStyle } =
+    useOutletContext();
 
   useEffect(() => {
     setFooterText('Dashboard customer summary');
-  }, [setFooterText]);
+    setOptionalFooterText('');
+    setOptionalFooterStyle('');
+  }, [setFooterText, setOptionalFooterText, setOptionalFooterStyle]);
 
   return (
     <div>
