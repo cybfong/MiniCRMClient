@@ -18,6 +18,33 @@ export const EDITABLE_FIELDS = [
   'status',
 ];
 
+const normalizeCustomerRecord = (
+  customer,
+  { contactIds = [], noteIds = [] } = {},
+) => ({
+  id: customer.id,
+  customerName: customer.customerName,
+  industry: customer.industry,
+  website: customer.website,
+  phone: customer.phone,
+  email: customer.email,
+  address: customer.address,
+  city: customer.city,
+  country: customer.country,
+  status: customer.status,
+  // createdAt, createdBy, updatedAt, updatedBy are all managed by server process, using the JWT token information
+  createdAt: customer.createdAt,
+  updatedAt: customer.updatedAt,
+  createdBy: customer.createdBy?.fullName ?? customer.createdBy ?? '',
+  updatedBy: customer.updatedBy?.fullName ?? customer.updatedBy ?? '',
+  // updated, isNew, deleted will be false after adding and update operations.
+  updated: false,
+  isNew: false,
+  deleted: false,
+  contactIds: customer.contactIds ?? contactIds,
+  noteIds: customer.noteIds ?? noteIds,
+});
+
 const customerSlice = createSlice({
   name: 'customer',
   initialState,
@@ -44,6 +71,7 @@ const customerSlice = createSlice({
 
       // 2. Apply the new value to the current row first
       currentRow[field] = newValue;
+      currentRow.deleted = false; // avoid multiple actions (delete + update not allowed)
 
       // 3. Scan ALL editable fields to see if ANY of them differ from initial data
       const hasAnyChanges = EDITABLE_FIELDS.some(
@@ -64,8 +92,8 @@ const customerSlice = createSlice({
       );
       if (hasIncompleteNewRow) return;
 
-      const now = new Date().toISOString();
-      const { userId, fullName } = action.payload;
+      const now = new Date().toLocaleString('sv-SE');
+      const fullName = action.payload;
 
       state.currentRowData.push({
         id: 'temp-' + Date.now(), // Crucial: Unique ID for getRowId
@@ -83,16 +111,93 @@ const customerSlice = createSlice({
         deleted: false,
         createdAt: now,
         updatedAt: now,
-        createdBy: fullName, // For diaplay
-        updatedBy: fullName, // For diaplay
-        createdByUserId: userId, // For database table update
-        updatedByUserId: userId, // For database table update
+        createdBy: fullName,
+        updatedBy: fullName,
+        contactIds: [],
+        noteIds: [],
       });
+    },
+    setRowsMarkedForDelete: (state, action) => {
+      const selectedIds = new Set(action.payload);
+
+      state.currentRowData.forEach((row) => {
+        // if (!row.isNew) {
+        row.deleted = selectedIds.has(row.id);
+        // }
+      });
+    },
+    updateCustomerStateData: (state, action) => {
+      const { savedCustomer, rowId, isNew, isUpdated, isDeleted } =
+        action.payload;
+      console.log(
+        '>> updateCustomerStateData [savedCustomer, rowId, isNew, isUpdated, isDeleted] : ',
+        savedCustomer,
+        rowId,
+        isNew,
+        isUpdated,
+        isDeleted,
+      );
+
+      // 0. Handle delete first so we remove instead of replacing
+      if (isDeleted === true) {
+        const deletedId = savedCustomer?.id ?? rowId;
+        state.currentRowData = state.currentRowData.filter(
+          (row) => row.id !== rowId && row.id !== deletedId,
+        );
+        state.initialRowData = state.initialRowData.filter(
+          (row) => row.id !== rowId && row.id !== deletedId,
+        );
+        return;
+      }
+
+      // 1. Locate the row in currentRowData
+      const currentIdx = state.currentRowData.findIndex(
+        (row) => row.id === rowId,
+      );
+      if (currentIdx === -1) {
+        return;
+      }
+
+      // 2. Prepare data to update currentRowData and perform update
+      const existingRow = state.currentRowData[currentIdx];
+
+      // 2. Normalize and update currentRowData
+      const processedCustomer = normalizeCustomerRecord(savedCustomer, {
+        contactIds: savedCustomer?.contactIds ?? existingRow?.contactIds ?? [],
+        noteIds: savedCustomer?.noteIds ?? existingRow?.noteIds ?? [],
+      });
+
+      state.currentRowData[currentIdx] = processedCustomer;
+
+      // 3. Update initialRowData
+      if (isNew === true) {
+        // Just copy NEW Customer to initialRowData
+        state.initialRowData.push({ ...processedCustomer });
+      } else if (isUpdated === true) {
+        // Find Customer for update or delete
+        const initialIdx = state.initialRowData.findIndex(
+          (row) => row.id === processedCustomer.id,
+        );
+        if (initialIdx !== -1) {
+          state.initialRowData[initialIdx] = { ...processedCustomer };
+        } else {
+          // Is that evn possible ?
+          console.error(
+            `InitialRowData not found for Customer Id : ${processedCustomer.id}`,
+          );
+        }
+      }
     },
   },
 });
 
-export const { setInitialData, updateRow, addRow } = customerSlice.actions;
+export const {
+  setInitialData,
+  updateRow,
+  addRow,
+  setRowsMarkedForDelete,
+  updateCustomerStateData,
+} = customerSlice.actions;
 
 export default customerSlice.reducer;
 

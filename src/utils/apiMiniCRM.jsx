@@ -37,7 +37,7 @@ export async function doLogin(login) {
 
 export function getJWTRemainingTime() {
   const token = store.getState().auth.token;
-  console.log(`JWT Token in getJWTRemainingTime() = ${token}`);
+  // console.log(`JWT Token in getJWTRemainingTime() = ${token}`);
 
   if (!token) return '00:00';
 
@@ -73,7 +73,7 @@ export function getJWTRemainingTime() {
 
 export const fetchCustomers = async () => {
   const token = store.getState().auth.token;
-  console.log(`JWT Token in fetchCustomers() = ${token}`);
+  // console.log(`JWT Token in fetchCustomers() = ${token}`);
 
   try {
     const response = await axios.get(`${API_URL}/customers`, {
@@ -91,7 +91,7 @@ export const fetchCustomers = async () => {
 
 export const fetchContactById = async (id) => {
   const token = store.getState().auth.token;
-  console.log(`JWT Token in fetchContactById() = ${token}`);
+  // console.log(`JWT Token in fetchContactById() = ${token}`);
 
   try {
     const response = await axios.get(`${API_URL}/contacts/${id}`, {
@@ -109,7 +109,7 @@ export const fetchContactById = async (id) => {
 
 export const fetchNoteById = async (id) => {
   const token = store.getState().auth.token;
-  console.log(`JWT Token in fetchNoteById() = ${token}`);
+  // console.log(`JWT Token in fetchNoteById() = ${token}`);
 
   try {
     const response = await axios.get(`${API_URL}/notes/${id}`, {
@@ -127,7 +127,7 @@ export const fetchNoteById = async (id) => {
 
 export const fetchUserDetails = async (userName) => {
   const token = store.getState().auth.token;
-  console.log(`JWT Token in fetchUserDetails() = ${token}`);
+  // console.log(`JWT Token in fetchUserDetails() = ${token}`);
 
   try {
     const response = await axios.get(`${API_URL}/user/${userName}`, {
@@ -136,6 +136,93 @@ export const fetchUserDetails = async (userName) => {
       },
     });
     console.log('User Data from server:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Request failed:', error.response?.status);
+    throw error;
+  }
+};
+
+export const createCustomer = async (newCustomer) => {
+  const token = store.getState().auth.token;
+  // console.log(`JWT Token in createCustomers() = ${token}`);
+
+  try {
+    // axios.post(url, data, config) : must follow sequence
+    const response = await axios.post(
+      `${API_URL}/customers`,
+      {
+        address: newCustomer.address,
+        city: newCustomer.city,
+        country: newCustomer.country,
+        customerName: newCustomer.customerName,
+        deleted: false,
+        email: newCustomer.email,
+        industry: newCustomer.industry,
+        phone: newCustomer.phone,
+        status: newCustomer.status,
+        website: newCustomer.website,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`, // Attach Bearer token
+        },
+      },
+    );
+    console.log('New Customer Data send to server:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Request failed:', error.response?.status);
+    throw error;
+  }
+};
+
+export const updateCustomer = async (updateCustomer) => {
+  const token = store.getState().auth.token;
+  // console.log(`JWT Token in updateCustomers() = ${token}`);
+
+  try {
+    // axios.post(url, data, config) : must follow sequence
+    const response = await axios.put(
+      `${API_URL}/customers/${updateCustomer.id}`,
+      {
+        address: updateCustomer.address,
+        city: updateCustomer.city,
+        country: updateCustomer.country,
+        customerName: updateCustomer.customerName,
+        deleted: updateCustomer.deleted,
+        email: updateCustomer.email,
+        industry: updateCustomer.industry,
+        phone: updateCustomer.phone,
+        status: updateCustomer.status,
+        website: updateCustomer.website,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`, // Attach Bearer token
+        },
+      },
+    );
+    console.log('Update Customer Data send to server:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Request failed:', error.response?.status);
+    throw error;
+  }
+};
+
+export const deleteCustomer = async (id) => {
+  const token = store.getState().auth.token;
+  // console.log(`JWT Token in deleteCustomers() = ${token}`);
+
+  try {
+    // axios.post(url, data, config) : must follow sequence
+    const response = await axios.delete(`${API_URL}/customers/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`, // Attach Bearer token
+      },
+    });
+    console.log('Deleted Customer server response :', response.data);
     return response.data;
   } catch (error) {
     console.error('Request failed:', error.response?.status);

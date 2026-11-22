@@ -86,9 +86,11 @@ export const customerColumnDefs = [
   },
 ];
 
+const isRowSelectionDisabled = (data) => Boolean(data?.isNew || data?.updated);
+
 export const rowSelection = {
   mode: 'multiRow', // Enables checkboxes on rows
-  checkboxes: true,
+  checkboxes: (params) => !isRowSelectionDisabled(params.data),
   headerCheckbox: true, // Enables the header "Select All" checkbox
   enableClickSelection: false,
   selectAll: 'currentPage', // Optional: 'all', 'filtered', or 'currentPage'
@@ -114,6 +116,9 @@ export const selectionColumnDef = {
   resizable: false,
   sortable: false,
   suppressHeaderMenuButton: true,
-
-  cellClass: 'customer-delete-selection-cell',
+  cellClass: 'customer-delete-selection-cell flex items-center justify-center',
+  cellClassRules: {
+    'opacity-40 cursor-not-allowed pointer-events-none': (params) =>
+      isRowSelectionDisabled(params.data),
+  },
 };

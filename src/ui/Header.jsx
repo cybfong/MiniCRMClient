@@ -51,7 +51,7 @@ function Header({ onLoadingStart, onLoadingEnd }) {
     // Show Loader and start the 500ms timer.
     const minimumDelay = onLoadingStart();
 
-    console.log('handleIconCLick in Header Component : ', item);
+    // console.log('handleIconCLick in Header Component : ', item);
 
     try {
       if (item.action === 'logout') {

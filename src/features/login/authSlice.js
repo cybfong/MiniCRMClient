@@ -37,4 +37,4 @@ export const getFullName = (state) => state.auth.fullName;
 
 export const getUserName = (state) => state.auth.userName;
 
-export const getUserId = (state) => state.auth.userId;
+// export const getUserId = (state) => state.auth.userId;

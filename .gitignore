@@ -24,4 +24,4 @@ dist-ssr
 *.sw?
 
 # Miscellaneous
-_delete_/
+_delete_/*

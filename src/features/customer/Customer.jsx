@@ -1,26 +1,33 @@
 import { AgGridReact } from 'ag-grid-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useFetcher, useLoaderData, useOutletContext } from 'react-router-dom';
+import ChangeBadge from '../../ui/badge/ChangeBadge.jsx';
+import Button from '../../ui/Button.jsx';
 import {
   customerColumnDefs,
   customerGridOptions,
   rowSelection,
   selectionColumnDef,
 } from '../../ui/datagrid/CustomerGridConfig';
+import {
+  createCustomer,
+  deleteCustomer,
+  updateCustomer,
+} from '../../utils/apiMiniCRM.jsx';
 import Contact from '../contact/Contact';
+import { getFullName } from '../login/authSlice.js';
 import Note from '../note/Note';
-import { useDispatch, useSelector } from 'react-redux';
-import ChangeBadge from '../../ui/badge/ChangeBadge.jsx';
 import {
   addRow,
   EDITABLE_FIELDS,
   getNewRows,
   getUpdatedRows,
   setInitialData,
+  setRowsMarkedForDelete,
+  updateCustomerStateData,
   updateRow,
 } from './customerSlice.js';
-import Button from '../../ui/Button.jsx';
-import { getFullName, getUserId } from '../login/authSlice.js';
 
 const menuItems = [
   {
@@ -54,7 +61,6 @@ function Customer() {
   const initialRowData = useSelector((state) => state.customer.initialRowData);
   const updatedCount = useSelector(getUpdatedRows);
   const newCount = useSelector(getNewRows);
-  const userId = useSelector(getUserId);
   const fullName = useSelector(getFullName);
 
   const [rowCount, setRowCount] = useState(0);
@@ -153,15 +159,19 @@ function Customer() {
   );
 
   // handle checkbox selection
-  const onSelectionChanged = useCallback((event) => {
-    console.log('>>> inside [onSelectionChanged]...');
+  const onSelectionChanged = useCallback(
+    (event) => {
+      console.log('>>> inside [onSelectionChanged]...');
 
-    const selectedIds = event.api
-      .getSelectedRows()
-      .map((customer) => customer.id);
+      const selectedIds = event.api
+        .getSelectedRows()
+        .map((customer) => customer.id);
 
-    setSelectedCustomerIdsToDelete(selectedIds);
-  }, []);
+      setSelectedCustomerIdsToDelete(selectedIds);
+      dispatch(setRowsMarkedForDelete(selectedIds));
+    },
+    [dispatch],
+  );
 
   // after cell is being edited
   const onCellEditRequest = useCallback(
@@ -182,6 +192,17 @@ function Customer() {
         return;
       }
 
+      // Logic to remove check-box (mark for delete)
+      const wasMarkedForDelete = Boolean(data.deleted);
+      if (wasMarkedForDelete) {
+        // Tells AG-Grid to uncheck/deselect that specific row (event.node) right away
+        event.node?.setSelected(false, false, 'cellEdit');
+        // Removes this row's ID from selectedCustomerIdsToDelete array
+        setSelectedCustomerIdsToDelete((prev) =>
+          prev.filter((id) => String(id) !== String(data.id)),
+        );
+      }
+
       dispatch(
         updateRow({
           id: data.id,
@@ -189,6 +210,11 @@ function Customer() {
           newValue: newValue,
         }),
       );
+
+      // Just ensure reapply the grid cellClassRules
+      if (wasMarkedForDelete && gridApi) {
+        gridApi.refreshCells({ rowNodes: [event.node], force: true });
+      }
     },
     [dispatch, gridApi],
   );
@@ -199,7 +225,7 @@ function Customer() {
   };
   const handleAddNewRow = () => {
     // 1. Add to bottom of Redux
-    dispatch(addRow({ userId, fullName }));
+    dispatch(addRow(fullName));
 
     // 2. Control the grid UI view safely
     setTimeout(() => {
@@ -227,7 +253,7 @@ function Customer() {
   }, [currentRowData]);
 
   // Handle Confirm action with validation
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     const newRows = currentRowData.filter((row) => row.isNew);
 
     for (const row of newRows) {
@@ -254,10 +280,108 @@ function Customer() {
     }
 
     // Proceed with save API dispatch...
+    const updatedRows = currentRowData.filter(
+      (row) => row.updated && !row.isNew,
+    );
+    const deletedRows = currentRowData.filter((row) => row.deleted);
 
     // Set green success styles
     setOptionalFooterStyle('font-semibold text-emerald-500');
-    setOptionalFooterText('Changes saved successfully!');
+    setOptionalFooterText('Saving Changes...');
+
+    const idsToRefresh = [];
+
+    try {
+      // 1. handle NEW rows (if any)
+      for (const row of newRows) {
+        const responseData = await createCustomer(row);
+        console.log('Saved data (NEW) : ', responseData);
+        // After receiving data following actions are needed :
+        // 1) update the currentRowData new customer id returned
+        // 2) add the same data to initialRowData
+        // 3) set isNew to false
+        dispatch(
+          updateCustomerStateData({
+            savedCustomer: responseData,
+            rowId: row.id,
+            isNew: true,
+            isUpdated: false,
+            isDeleted: false,
+          }),
+        );
+
+        if (responseData?.id != null) {
+          idsToRefresh.push(responseData.id);
+        }
+      }
+
+      // 2. handle UPDATED rows
+      // console.log('Number of rows with update : ', updateRows);
+      for (const row of updatedRows) {
+        const responseData = await updateCustomer(row);
+        console.log('Saved data (UPDATED): ', responseData);
+        // After receiving data following actions are needed :
+        // 1) update the currentRowData new customer id
+        // 2) update the same data to initialRowData
+        dispatch(
+          updateCustomerStateData({
+            savedCustomer: responseData,
+            rowId: row.id,
+            isNew: false,
+            isUpdated: true,
+            isDeleted: false,
+          }),
+        );
+
+        idsToRefresh.push(row.id);
+      }
+
+      // 3. handle DELETED rows
+      for (const row of deletedRows) {
+        const responseData = await deleteCustomer(row.id);
+        console.log('Saved data (DELETED): ', responseData);
+        // After receiving data following actions are needed :
+        // 1) update the currentRowData new customer id
+        // 2) update the same data to initialRowData
+        dispatch(
+          updateCustomerStateData({
+            savedCustomer: responseData,
+            rowId: row.id,
+            isNew: false,
+            isUpdated: false,
+            isDeleted: true,
+          }),
+        );
+
+        if (activeCustomerId === row.id) {
+          setActiveCustomerId(null);
+        }
+      }
+
+      if (deletedRows.length > 0) {
+        setSelectedCustomerIdsToDelete([]);
+      }
+
+      if (gridApi && idsToRefresh.length > 0) {
+        // console.log('Trying to refresh ag-grid');
+        const rowNodes = idsToRefresh
+          .map((id) => gridApi.getRowNode(String(id)))
+          .filter(Boolean);
+
+        if (rowNodes.length > 0) {
+          gridApi.refreshCells({
+            rowNodes,
+            force: true, // Forces AG-Grid to re-run cellClassRules / checkCellUpdatedRule
+          });
+        }
+      }
+
+      setOptionalFooterText('Changes saved successfully!');
+    } catch (error) {
+      console.error('Error while saving customer changes:', error);
+      setOptionalFooterStyle('font-bold text-rose-500');
+      setOptionalFooterText('Failed to save changes. Please try again.');
+    }
   };
 
   return (
