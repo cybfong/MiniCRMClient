@@ -118,7 +118,7 @@ export const selectionColumnDef = {
   suppressHeaderMenuButton: true,
   cellClass: 'customer-delete-selection-cell flex items-center justify-center',
   cellClassRules: {
-    'opacity-40 cursor-not-allowed pointer-events-none': (params) =>
+    'opacity-40 cursor-not-allowed': (params) =>
       isRowSelectionDisabled(params.data),
   },
 };

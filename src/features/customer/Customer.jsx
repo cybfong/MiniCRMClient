@@ -161,7 +161,7 @@ function Customer() {
   // handle checkbox selection
   const onSelectionChanged = useCallback(
     (event) => {
-      console.log('>>> inside [onSelectionChanged]...');
+      // console.log('>>> inside [onSelectionChanged]...');
 
       const selectedIds = event.api
         .getSelectedRows()
@@ -176,7 +176,7 @@ function Customer() {
   // after cell is being edited
   const onCellEditRequest = useCallback(
     (event) => {
-      console.log('>>> inside [onCellEditRequest]...');
+      // console.log('>>> inside [onCellEditRequest]...');
 
       const { data, colDef, newValue } = event;
 
@@ -223,6 +223,8 @@ function Customer() {
   const onGridReady = (params) => {
     setGridApi(params.api); // <--- Save the API to your state here
   };
+
+  // When Add customer button is clicked
   const handleAddNewRow = () => {
     // 1. Add to bottom of Redux
     dispatch(addRow(fullName));
@@ -231,9 +233,17 @@ function Customer() {
     setTimeout(() => {
       if (!gridApi) return;
 
-      // Because postSortRows moved it to visual position 0:
       const lastIndex = gridApi.getDisplayedRowCount() - 1;
-      gridApi.ensureIndexVisible(0);
+      if (lastIndex < 0) return;
+
+      // Focus on new added row for input
+      const rowNode = gridApi.getDisplayedRowAtIndex(lastIndex);
+      if (rowNode?.data?.id) {
+        setActiveCustomerId(rowNode.data.id);
+      }
+
+      gridApi.ensureIndexVisible(lastIndex);
+      gridApi.setFocusedCell(lastIndex, 'customerName');
       gridApi.startEditingCell({
         rowIndex: lastIndex,
         colKey: 'customerName',
@@ -268,11 +278,28 @@ function Customer() {
           'Please fill in all data fields for new customer rows !',
         );
 
+        // active row ID of the incomplete NEW customer
+        setActiveCustomerId(row.id);
+
         if (gridApi) {
-          const rowIndex = currentRowData.findIndex((r) => r.id === row.id);
-          if (rowIndex !== -1) {
-            gridApi.ensureIndexVisible(rowIndex);
-            gridApi.startEditingCell({ rowIndex, colKey: 'customerName' });
+          const rowNode = gridApi.getRowNode(String(row.id));
+
+          // rowNode.rowIndex : is the grid's actual visual row index
+          // currentRowData.findIndex(...) : is just a safety net if rowNode.rowIndex is not available
+          const targetRowIndex =
+            rowNode?.rowIndex != null && rowNode.rowIndex >= 0
+              ? rowNode.rowIndex
+              : currentRowData.findIndex((r) => r.id === row.id);
+
+          if (targetRowIndex !== -1) {
+            gridApi.ensureIndexVisible(targetRowIndex);
+            setTimeout(() => {
+              gridApi.setFocusedCell(targetRowIndex, 'customerName');
+              gridApi.startEditingCell({
+                rowIndex: targetRowIndex,
+                colKey: 'customerName',
+              });
+            }, 0);
           }
         }
         return; // Abort save
@@ -339,7 +366,7 @@ function Customer() {
       // 3. handle DELETED rows
       for (const row of deletedRows) {
         const responseData = await deleteCustomer(row.id);
-        console.log('Saved data (DELETED): ', responseData);
+        console.log('Saved data (DELETED) : ', row.id, responseData);
         // After receiving data following actions are needed :
         // 1) update the currentRowData new customer id
         // 2) update the same data to initialRowData

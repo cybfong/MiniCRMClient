@@ -129,14 +129,14 @@ const customerSlice = createSlice({
     updateCustomerStateData: (state, action) => {
       const { savedCustomer, rowId, isNew, isUpdated, isDeleted } =
         action.payload;
-      console.log(
-        '>> updateCustomerStateData [savedCustomer, rowId, isNew, isUpdated, isDeleted] : ',
-        savedCustomer,
-        rowId,
-        isNew,
-        isUpdated,
-        isDeleted,
-      );
+      // console.log(
+      //   '>> updateCustomerStateData [savedCustomer, rowId, isNew, isUpdated, isDeleted] : ',
+      //   savedCustomer,
+      //   rowId,
+      //   isNew,
+      //   isUpdated,
+      //   isDeleted,
+      // );
 
       // 0. Handle delete first so we remove instead of replacing
       if (isDeleted === true) {
