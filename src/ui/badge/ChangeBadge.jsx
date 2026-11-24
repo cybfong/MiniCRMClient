@@ -6,15 +6,20 @@ function ChangeBadge({ label, count = 0, type = 'add' }) {
     count === 0
       ? 'bg-gray-500 text-stone-300'
       : {
-          add: 'bg-emerald-600 text-white',
+          add: 'bg-green-600 text-white',
           update: 'bg-amber-600 text-white',
           delete: 'bg-red-600 text-white',
         }[type];
 
   return (
-    <span className={`${base} ${colorStyles}`}>
-      {`${label} ${count > 0 ? '[' + count + ']' : ''}`}
-    </span>
+    <div className={`${base} ${colorStyles} relative`}>
+      {label}
+      {count > 0 && (
+        <span className="text-l absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1 text-xs font-semibold text-stone-100 shadow">
+          {count}
+        </span>
+      )}
+    </div>
   );
 }
 

@@ -91,7 +91,7 @@ const isRowSelectionDisabled = (data) => Boolean(data?.isNew || data?.updated);
 export const rowSelection = {
   mode: 'multiRow', // Enables checkboxes on rows
   checkboxes: (params) => !isRowSelectionDisabled(params.data),
-  headerCheckbox: true, // Enables the header "Select All" checkbox
+  headerCheckbox: false, // Disables the header "Select All" checkbox
   enableClickSelection: false,
   selectAll: 'currentPage', // Optional: 'all', 'filtered', or 'currentPage'
 };
@@ -112,8 +112,9 @@ export const customerGridOptions = {
 };
 
 export const selectionColumnDef = {
-  width: 50,
-  resizable: false,
+  headerName: 'Delete ?', // or 'Delete' (increase width if using a longer word)
+  width: 85,
+  resizable: true,
   sortable: false,
   suppressHeaderMenuButton: true,
   cellClass: 'customer-delete-selection-cell flex items-center justify-center',
