@@ -66,7 +66,7 @@ function Login() {
 
   return (
     <div className="mt-20 flex items-center justify-center">
-      <form className="flex w-full max-w-md flex-col gap-4 rounded-xl bg-white p-6 shadow-md">
+      <form className="flex w-full max-w-md flex-col gap-4 rounded-xl bg-slate-200 p-6 shadow-md">
         <div className="flex justify-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500 text-stone-200">
             {iconLockClosed}
@@ -86,7 +86,7 @@ function Login() {
             type="text"
             value={userName}
             onChange={(e) => setUserName(e.target.value)}
-            className="grow rounded-full border border-stone-200 px-4 py-2 text-sm transition-all duration-300 placeholder:text-stone-400 focus:ring-3 focus:ring-indigo-400 focus:outline-none md:px-6 md:py-3"
+            className="grow rounded-full border border-stone-400 px-4 py-2 text-sm transition-all duration-300 placeholder:text-stone-400 focus:ring-3 focus:ring-indigo-400 focus:outline-none md:px-6 md:py-3"
             placeholder="Enter username"
           />
         </div>
@@ -99,7 +99,7 @@ function Login() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="grow rounded-full border border-stone-200 px-4 py-2 text-sm transition-all duration-300 placeholder:text-stone-400 focus:ring-3 focus:ring-indigo-400 focus:outline-none md:px-6 md:py-3"
+            className="grow rounded-full border border-stone-400 px-4 py-2 text-sm transition-all duration-300 placeholder:text-stone-400 focus:ring-3 focus:ring-indigo-400 focus:outline-none md:px-6 md:py-3"
             placeholder="Enter password"
           />
         </div>

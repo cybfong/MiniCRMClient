@@ -221,3 +221,8 @@ export const getNewRows = createSelector(
     return currentRowData.filter((row) => row.isNew === true);
   },
 );
+
+export const selectHasConfirmItems = (state) =>
+  state.customer.currentRowData.some(
+    (row) => row.isNew || row.updated || row.deleted,
+  );

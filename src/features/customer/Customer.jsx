@@ -23,6 +23,7 @@ import {
   EDITABLE_FIELDS,
   getNewRows,
   getUpdatedRows,
+  selectHasConfirmItems,
   setInitialData,
   setRowsMarkedForDelete,
   updateCustomerStateData,
@@ -69,6 +70,8 @@ function Customer() {
   const [activeCustomerId, setActiveCustomerId] = useState(null);
 
   const [gridApi, setGridApi] = useState(null);
+
+  const hasConfirmItems = useSelector(selectHasConfirmItems);
 
   // ==================================================
   // UseEffect start
@@ -451,7 +454,11 @@ function Customer() {
             >
               Add Customer
             </Button>
-            <Button type="small" onClick={handleConfirm}>
+            <Button
+              type="small"
+              onClick={handleConfirm}
+              disabled={!hasConfirmItems}
+            >
               Confirm
             </Button>
           </div>
